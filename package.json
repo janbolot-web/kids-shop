@@ -14,7 +14,9 @@
     "express": "^4.18.1",
     "express-validator": "^6.14.0",
     "jsonwebtoken": "^8.5.1",
-    "mongoose": "^6.3.3"
+    "mongoose": "^6.3.3",
+    "react-content-loader": "^6.2.0",
+    "react-modal-hover": "^1.1.13"
   },
   "devDependencies": {
     "nodemon": "^2.0.16"

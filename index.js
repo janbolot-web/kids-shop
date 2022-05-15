@@ -6,8 +6,9 @@ const PORT = port || 5000;
 
 const app = express();
 
-app.use(express.json());
-app.use('/api/auth', require('./routes/auth.routes'))
+app.use(express.json({ extended: true }));
+app.use("/api/auth", require("./routes/auth.routes"));
+app.use("/api/product", require("./routes/product.routes"));
 
 const start = async () => {
   await mongoose.connect(mongoUri);

@@ -6,6 +6,8 @@ const { check, validationResult } = require("express-validator");
 
 const User = require("../models/User");
 const { jwtSecret } = require("../config");
+const Role = require("../models/Role");
+const roleMiddleware = require("../middlewares/roleMiddleware");
 
 router.post(
   "/registration",
@@ -21,7 +23,7 @@ router.post(
 
       if (!errors.isEmpty()) {
         return res.status(400).json({
-          errors,
+          errors: errors.array(),
           message: "Некорректные данные при входе в систему",
         });
       }
@@ -34,7 +36,12 @@ router.post(
           .json({ message: "Такой пользователь уже существует" });
       }
       const hashPassword = await bcrypt.hash(password, 7);
-      const user = new User({ email, password: hashPassword });
+      const userRole = await Role.findOne({ value: "USER" });
+      const user = new User({
+        email,
+        password: hashPassword,
+        roles: [userRole.value],
+      });
 
       await user.save();
 
@@ -48,7 +55,7 @@ router.post(
 router.post(
   "/login",
   [
-    check("email", "Введите корректный емeйл").normalizeEmail().isEmail(),
+    check("email", "Введите корректный емeйл").isEmail(),
     check("password", "Введите пароль").exists(),
   ],
   async (req, res) => {
@@ -75,15 +82,28 @@ router.post(
           .json({ message: "Неверный пароль, попробуйте снова!" });
       }
 
-      const token = jwt.sign({ userId: user._id }, jwtSecret, {
-        expiresIn: "1h",
-      });
+      const token = jwt.sign(
+        { userId: user._id, roles: user.roles },
+        jwtSecret,
+        {
+          expiresIn: "24h",
+        }
+      );
 
-      res.json({ token, userId: user._id });
+      res.json({ token, userId: user._id, role: user.roles[0] });
     } catch (e) {
       console.log(e);
     }
   }
 );
+
+router.get("/users", roleMiddleware("ADMIN"), async (req, res) => {
+  try {
+    const users = await User.find();
+    res.json(users);
+  } catch (e) {
+    console.log(e);
+  }
+});
 
 module.exports = router;
